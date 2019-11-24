@@ -24,9 +24,9 @@ pbc2_longtrain <- filter(pbc2, id %in% train_ids)
 pbc2_ep1train  <- pbc2_longtrain %>% filter(year==0) 
 pbc2_longval   <- filter(pbc2, !(id %in% train_ids))
 
-###############
+#######################################
 #A. Training (deriving the risk tools)#
-##############
+######################################
 #A1. based on earliest observations
 CoxFit_earl <- coxph(Surv(years, event) ~ drug + age + log(serBilir) + spiders, data = pbc2_ep1train, model = TRUE)
 
@@ -59,14 +59,29 @@ df_age_earl <- pbc2_longval %>% group_by(id) %>%
 d.sJointE   <- df_age_earl %>% group_split(id) %>% map_dfr(function(sgr) {
   #browser()
   fit <- JMbayes::survfitJM(object = JMFit, newdata = sgr, last.time = unique(sgr$s) , survTimes = unique(sgr$t_plus_s), idVar = "id")
-  res <- data.frame(id=sgr$id[1], years=sgr$years[1], s=sgr$s[1], t_plus_s=sgr$t_plus_s[1], event=sgr$event[1], fit[['summaries']][[1]])
+  res <- data.frame(id=sgr$id[1], years=sgr$years[1], s=sgr$s[1], Y.s=sgr$Y.s[1], t_plus_s=sgr$t_plus_s[1], event=sgr$event[1], fit[['summaries']][[1]])
   res
 })
 
 joint <- timeROC(T=d.sJointE$Y.s, delta=d.sJointE$event, marker=I(1 - d.sJointE$Mean), cause=1, times=I(t_r/scal_r))
 
 #################
-#C. Results    ##
+#C. Results #####
 #################
 earl
+# Time-dependent-Roc curve estimated using IPCW  (n=93, without competing risks). 
+#     Cases Survivors Censored AUC (%)
+# t=0     0        93        0      NA
+# t=3    54        39        0    89.7
+# 
+# Method used for estimating IPCW:marginal 
 joint
+# Time-dependent-Roc curve estimated using IPCW  (n=93, without competing risks). 
+#     Cases Survivors Censored AUC (%)
+# t=0     0        93        0      NA
+# t=3    54        39        0   87.89
+# 
+# Method used for estimating IPCW:marginal 
+# 
+# Total computation time : 0  secs.
+
